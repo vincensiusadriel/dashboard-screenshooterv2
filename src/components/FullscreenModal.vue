@@ -155,7 +155,19 @@
                 :key="item"
               >
                 <div class="columns is-multiline is-mobile">
-                  <div class="column is-full is-size-6">{{ item }}</div>
+                  <div class="column is-full is-size-6">
+                    <span
+                      class="icon has-tooltip-right cursor-default"
+                      data-tooltip="Saved"
+                      v-if="linksResult[item] != null"
+                    >
+                      <i
+                        class="fa fa-check has-text-success"
+                        aria-hidden="true"
+                      ></i>
+                    </span>
+                    {{ item }}
+                  </div>
                   <div class="column is-full">
                     <div class="is-flex is-flex-wrap-wrap">
                       <button
@@ -164,10 +176,47 @@
                       >
                         Add To Queue
                       </button>
+                      <button
+                        v-if="linksResult[item] != null"
+                        class="button is-info mr-2 mb-2"
+                        @click="setCurrentLinkResult(linksResult[item])"
+                      >
+                        Show Result
+                      </button>
                     </div>
                   </div>
                 </div>
               </article>
+            </div>
+            <div class="column overflown-column" style="background: white">
+              <div class="mt-4"></div>
+
+              <img
+                class="mt-4"
+                v-if="currentLinkResult != null"
+                :src="currentLinkResult.image + `?rnd=${counter}`"
+                style="cursor: pointer"
+                @click="isShowImage = true"
+              />
+
+              <div
+                :class="{ modal: true, 'is-active': isShowImage }"
+                v-if="currentLinkResult != null"
+              >
+                <div class="modal-background"></div>
+                <div class="modal-content" style="overflow-y: scroll">
+                  <img
+                    :src="currentLinkResult.image + `?rnd=${counter}`"
+                    alt=""
+                  />
+                </div>
+                <button
+                  class="modal-close delete is-large"
+                  style="background-color: rgba(10, 10, 10, 0.3)"
+                  aria-label="close"
+                  @click="isShowImage = false"
+                ></button>
+              </div>
             </div>
           </div>
         </div>
@@ -370,6 +419,9 @@ export default {
       isLoading: false,
       isPrinting: false,
       isBackground: true,
+      isShowImage: false,
+      currentLinkResult: null,
+      counter: 0,
     };
   },
   mounted() {
@@ -380,7 +432,15 @@ export default {
     loadSLA(this.Path, this.listOrigin);
   },
   methods: {
+    setCurrentLinkResult(val) {
+      this.counter++;
+      this.currentLinkResult = val;
+    },
     async takePrint(key) {
+      let pathScrapper = null;
+      let pathImage = null;
+      let scrapperResult = null;
+      let imageResult = null;
       let page = pageMap[key];
       this.isPrinting = true;
 
@@ -458,15 +518,17 @@ export default {
         }
 
         if (Object.values(result).length > 0) {
-          let stringResult = JSON.stringify(result);
-          fs.writeFileSync(path.join(this.Path, key + ".json"), stringResult);
+          scrapperResult = JSON.stringify(result);
+          pathScrapper = path.join(this.Path, key + ".json");
+          fs.writeFileSync(pathScrapper, scrapperResult);
         }
       }
 
       if (clip != null) {
-        await page.screenshot({
+        pathImage = path.join(this.Path, key + ".png");
+        imageResult = await page.screenshot({
           type: "png",
-          path: path.join(this.Path, key + ".png"),
+          path: pathImage,
           fullPage: false,
           clip: {
             height: clip.height + clip.y + 10,
@@ -475,6 +537,21 @@ export default {
             y: 0,
           },
         });
+      }
+
+      if (imageResult != null || scrapperResult != null) {
+        let payload = {
+          // image: "data:image/jpeg;base64," + imageResult.toString("base64"),
+          image: "file://" + pathImage,
+          scrapper: scrapperResult,
+        };
+
+        this.$store.commit("ADD_LINK_RESULT", {
+          key: key,
+          value: payload,
+        });
+
+        this.setCurrentLinkResult(payload);
       }
 
       this.isPrinting = false;
