@@ -5,10 +5,18 @@
     <!-- END NAV -->
     <div class="container">
       <div class="columns">
-        <div class="column is-hidden-mobile is-one-quarter">
-          <SideBar></SideBar>
+        <div
+          class="column is-hidden-mobile is-one-quarter"
+          style="overflow-y: scroll; height: 100vh"
+        >
+          <SideBar @change="navigate"></SideBar>
+          <br />
+          <br />
         </div>
-        <div class="column is-three-quarters">
+        <div
+          class="column is-three-quarters"
+          style="overflow-y: scroll; height: 100vh"
+        >
           <!-- <nav class="breadcrumb" aria-label="breadcrumbs">
                     <ul>
                         <li><a href="../">Bulma</a></li>
@@ -56,13 +64,13 @@
           </section>
           <div class="columns is-multiline">
             <div class="column is-full">
-              <ConfigsVariable></ConfigsVariable>
+              <ConfigsVariable ref="main"></ConfigsVariable>
             </div>
             <div class="column is-full">
-              <GlobalVariable></GlobalVariable>
+              <GlobalVariable ref="global"></GlobalVariable>
             </div>
             <div class="column is-full">
-              <LinksConfig></LinksConfig>
+              <LinksConfig ref="dashboard" :forwarder="forwarder"></LinksConfig>
             </div>
 
             <!-- <div class="column is-half">
@@ -130,14 +138,12 @@
               </div>
             </div> -->
           </div>
+          <!-- <button @click="someTest" class="button is-primary">Test</button> -->
+          <br />
+          <br />
         </div>
       </div>
     </div>
-    <!-- <button @click="someTest" class="button is-primary">Test</button> -->
-    <br />
-    <br />
-    <br />
-    <br />
   </div>
 </template>
 
@@ -154,6 +160,11 @@ import path from "path";
 
 export default {
   name: "App",
+  data() {
+    return {
+      forwarder: "",
+    };
+  },
   components: {
     SideBar,
     GlobalVariable,
@@ -172,6 +183,15 @@ export default {
       const configsPath = path.join(this.$store.getters.Path, "images.png");
 
       fs.writeFileSync(configsPath, buffer);
+    },
+    navigate(key) {
+      const el = this.$refs[key]?.$el;
+      this.forwarder = key;
+
+      if (el) {
+        // Use el.scrollIntoView() to instantly scroll to the element
+        el.scrollIntoView({ behavior: "smooth" });
+      }
     },
   },
 };

@@ -19,6 +19,7 @@
     "bulma-switch": "^2.0.4",
     "bulma-tooltip": "^3.0.2",
     "core-js": "^3.8.3",
+    "highlight.js": "^11.5.0",
     "moment": "^2.29.1",
     "playwright": "^1.19.2",
     "vue": "^2.6.14",

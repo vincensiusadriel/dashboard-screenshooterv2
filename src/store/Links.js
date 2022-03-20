@@ -1,6 +1,7 @@
 import Vue from "vue";
 
 const state = {
+  search: "",
   linksResult: {},
   links: {
     "newrelic play interactive": {
@@ -300,6 +301,9 @@ const mutations = {
 
     state.links[payload.key].selected = payload.value;
   },
+  SET_SEARCH(state, value) {
+    state.search = value;
+  },
 };
 
 const getters = {
@@ -311,6 +315,9 @@ const getters = {
   },
   linksResult(state) {
     return state.linksResult;
+  },
+  search(state) {
+    return state.search;
   },
 };
 

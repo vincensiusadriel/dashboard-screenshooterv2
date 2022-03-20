@@ -190,33 +190,10 @@
             </div>
             <div class="column overflown-column" style="background: white">
               <div class="mt-4"></div>
-
-              <img
-                class="mt-4"
-                v-if="currentLinkResult != null"
-                :src="currentLinkResult.image + `?rnd=${counter}`"
-                style="cursor: pointer"
-                @click="isShowImage = true"
-              />
-
-              <div
-                :class="{ modal: true, 'is-active': isShowImage }"
-                v-if="currentLinkResult != null"
-              >
-                <div class="modal-background"></div>
-                <div class="modal-content" style="overflow-y: scroll">
-                  <img
-                    :src="currentLinkResult.image + `?rnd=${counter}`"
-                    alt=""
-                  />
-                </div>
-                <button
-                  class="modal-close delete is-large"
-                  style="background-color: rgba(10, 10, 10, 0.3)"
-                  aria-label="close"
-                  @click="isShowImage = false"
-                ></button>
-              </div>
+              <links-result
+                :currentLinkResult="currentLinkResult"
+                :counter="counter"
+              ></links-result>
             </div>
           </div>
         </div>
@@ -290,6 +267,7 @@ import { chromium, errors } from "playwright";
 import path from "path";
 import fs from "fs";
 import moment from "moment";
+import LinksResult from "./LinksResult.vue";
 
 let context;
 let pageMap = {};
@@ -398,6 +376,7 @@ const loadSLA = function (pathUrl, listOrigin) {
 export default {
   components: {
     ConfirmationModal,
+    LinksResult,
   },
   props: {
     value: {
@@ -422,6 +401,7 @@ export default {
       isShowImage: false,
       currentLinkResult: null,
       counter: 0,
+      currentShow: "image",
     };
   },
   mounted() {

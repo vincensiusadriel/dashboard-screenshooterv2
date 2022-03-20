@@ -111,7 +111,12 @@
           </div>
         </article>
         <div class="list-config">
-          <article class="post" v-for="item in linksArr" :key="item">
+          <article
+            class="post"
+            v-for="item in linksArr"
+            :key="item"
+            :ref="item"
+          >
             <div class="columns is-mobile">
               <div class="column">
                 <div class="is-flex">
@@ -373,6 +378,12 @@ export default {
     EditableControl,
     ConfirmationModal,
   },
+  props: {
+    forwarder: {
+      type: String,
+      default: "",
+    },
+  },
   data() {
     return {
       isHide: false,
@@ -380,7 +391,6 @@ export default {
       isShowModal: false,
       isHideDetail: false,
       varName: "",
-      search: "",
       isEmpty: false,
       deleteKey: "",
     };
@@ -396,6 +406,14 @@ export default {
     },
     isDuplicate() {
       return this.varName in this.$store.getters.links;
+    },
+    search: {
+      get() {
+        return this.$store.getters.search;
+      },
+      set(value) {
+        this.$store.commit("SET_SEARCH", value);
+      },
     },
   },
   methods: {
@@ -467,6 +485,19 @@ export default {
           new RegExp(query, "i"),
           "<span class='yellow black--text'>" + str + "</span>"
         );
+      }
+    },
+  },
+  watch: {
+    forwarder(key) {
+      let el = this.$refs[key];
+
+      if (el != null && el.length > 0) {
+        el = el[0];
+      }
+      if (el) {
+        // Use el.scrollIntoView() to instantly scroll to the element
+        el.scrollIntoView({ behavior: "smooth" });
       }
     },
   },
