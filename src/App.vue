@@ -17,14 +17,6 @@
           class="column is-three-quarters"
           style="overflow-y: scroll; height: 100vh"
         >
-          <!-- <nav class="breadcrumb" aria-label="breadcrumbs">
-                    <ul>
-                        <li><a href="../">Bulma</a></li>
-                        <li><a href="../">Templates</a></li>
-                        <li><a href="../">Examples</a></li>
-                        <li class="is-active"><a href="#" aria-current="page">Admin</a></li>
-                    </ul>
-                </nav> -->
           <section class="hero is-info welcome is-small">
             <div class="hero-body">
               <div class="container">
@@ -35,14 +27,16 @@
           </section>
 
           <section class="info-tiles">
-            <!-- <div class="tile is-ancestor has-text-centered">
-              <div class="tile is-parent">
+            <div class="tile is-ancestor has-text-centered">
+              <div class="tile is-parent" ref="save">
                 <article class="tile is-child box">
-                  <p class="title">439k</p>
-                  <p class="subtitle">Users</p>
+                  <button @click="saveConfiguration" class="button is-primary">
+                    Save Current Configuration
+                  </button>
+                  <p class="subtitle mt-2" v-if="isSaved">Successfully saved</p>
                 </article>
               </div>
-              <div class="tile is-parent">
+              <!-- <div class="tile is-parent">
                 <article class="tile is-child box">
                   <p class="title">59k</p>
                   <p class="subtitle">Products</p>
@@ -59,9 +53,10 @@
                   <p class="title">19</p>
                   <p class="subtitle">Exceptions</p>
                 </article>
-              </div>
-            </div> -->
+              </div> -->
+            </div>
           </section>
+
           <div class="columns is-multiline">
             <div class="column is-full">
               <ConfigsVariable ref="main"></ConfigsVariable>
@@ -138,6 +133,7 @@
               </div>
             </div> -->
           </div>
+
           <!-- <button @click="someTest" class="button is-primary">Test</button> -->
           <br />
           <br />
@@ -163,6 +159,7 @@ export default {
   data() {
     return {
       forwarder: "",
+      isSaved: false,
     };
   },
   components: {
@@ -184,14 +181,38 @@ export default {
 
       fs.writeFileSync(configsPath, buffer);
     },
+    saveConfiguration() {
+      let pathToConfig = path.join(this.Path, "config.json");
+      let data = {
+        configs: this.$store.getters.configs,
+        globalVar: this.$store.getters.globalVar,
+        links: this.$store.getters.links,
+      };
+
+      fs.writeFileSync(pathToConfig, JSON.stringify(data, null, 4));
+
+      this.isSaved = true;
+    },
     navigate(key) {
-      const el = this.$refs[key]?.$el;
+      const el = this.$refs[key]?.$el || this.$refs[key];
       this.forwarder = key;
 
       if (el) {
         // Use el.scrollIntoView() to instantly scroll to the element
         el.scrollIntoView({ behavior: "smooth" });
       }
+    },
+  },
+  mounted() {
+    let pathToConfig = path.join(this.Path, "config.json");
+    let data = JSON.parse(fs.readFileSync(pathToConfig));
+    this.$store.commit("SET_CONFIGS", data.configs);
+    this.$store.commit("SET_GLOBALVAR", data.globalVar);
+    this.$store.commit("SET_LINKS", data.links);
+  },
+  computed: {
+    Path() {
+      return this.$store.getters.Path;
     },
   },
 };

@@ -17,8 +17,8 @@
         </span>
       </a>
     </header>
-    <template v-if="!isHide">
-      <div class="content">
+    <template>
+      <div class="content" v-show="!isHide">
         <article class="post">
           <div class="columns is-multiline is-mobile">
             <div class="column is-full">
@@ -190,6 +190,12 @@
                   rows="7"
                 /> -->
                   <EditableControl v-model="links[item].link"></EditableControl>
+                  <p
+                    v-if="!isValidHttpUrlMap[item]"
+                    class="has-text-danger is-size-7"
+                  >
+                    Invalid URL
+                  </p>
                 </div>
               </div>
               <div
@@ -415,8 +421,29 @@ export default {
         this.$store.commit("SET_SEARCH", value);
       },
     },
+    isValidHttpUrlMap() {
+      let arr = Object.keys(this.links);
+      let len = arr.length;
+      let obj = {};
+      for (let i = 0; i < len; i++) {
+        obj[arr[i]] = this.isValidHttpUrl(this.links[arr[i]].link);
+      }
+
+      return obj;
+    },
   },
   methods: {
+    isValidHttpUrl(string) {
+      let url;
+
+      try {
+        url = new URL(string);
+      } catch (_) {
+        return false;
+      }
+
+      return url.protocol === "http:" || url.protocol === "https:";
+    },
     AddScrapper(key) {
       this.$store.commit("ADD_SCRAPPER", { key: key });
     },
@@ -472,19 +499,6 @@ export default {
           key: this.linksArr[i],
           value: value,
         });
-      }
-    },
-  },
-  filters: {
-    highlight: function (value, query) {
-      if (value != undefined) {
-        let valueStr = value.toString();
-        let idx = valueStr.toLowerCase().search(query.toLowerCase());
-        let str = valueStr.substr(idx, query.length);
-        return valueStr.replace(
-          new RegExp(query, "i"),
-          "<span class='yellow black--text'>" + str + "</span>"
-        );
       }
     },
   },

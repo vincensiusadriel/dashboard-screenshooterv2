@@ -1,7 +1,8 @@
 <template>
   <aside class="menu is-hidden-mobile mt-4 ml-4">
-    <p class="menu-label">Config</p>
+    <p class="menu-label">Navigation Bar</p>
     <ul class="menu-list">
+      <li><a @click="changeTab('save')">Save Current Configuration</a></li>
       <li><a @click="changeTab('main')">Main Configuration</a></li>
       <li><a @click="changeTab('global')">Global Variable</a></li>
       <li><a @click="changeTab('dashboard')">Dashboards</a></li>

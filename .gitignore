@@ -26,4 +26,6 @@ pnpm-debug.log*
 /dist_electron
 
 state.json
+config.json
 *.png
+/result

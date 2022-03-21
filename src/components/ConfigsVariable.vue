@@ -17,8 +17,8 @@
         </span>
       </a>
     </header>
-    <template v-if="!isHide">
-      <div class="content">
+    <template>
+      <div v-show="!isHide" class="content">
         <article class="post">
           <table class="table is-fullwidth is-striped">
             <tbody>

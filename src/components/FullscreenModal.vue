@@ -499,13 +499,13 @@ export default {
 
         if (Object.values(result).length > 0) {
           scrapperResult = JSON.stringify(result);
-          pathScrapper = path.join(this.Path, key + ".json");
+          pathScrapper = path.join(this.Path, "result", key + ".json");
           fs.writeFileSync(pathScrapper, scrapperResult);
         }
       }
 
       if (clip != null) {
-        pathImage = path.join(this.Path, key + ".png");
+        pathImage = path.join(this.Path, "result", key + ".png");
         imageResult = await page.screenshot({
           type: "png",
           path: pathImage,
@@ -600,7 +600,11 @@ export default {
       this.currentPrinted = this.listToBePrinted.shift();
     },
     getHostName(link) {
-      return new URL(link).hostname;
+      try {
+        return new URL(link).hostname;
+      } catch (error) {
+        return null;
+      }
     },
     async openChromium(links) {
       if (links == null) return;
@@ -691,8 +695,12 @@ export default {
     },
     getAllDomain() {
       let hostName = this.linksSelected.map((x) => {
-        let url = new URL(this.links[x].link);
-        return url.protocol + "//" + url.hostname;
+        try {
+          let url = new URL(this.links[x].link);
+          return url.protocol + "//" + url.hostname;
+        } catch (error) {
+          return null;
+        }
       });
 
       let set = {};

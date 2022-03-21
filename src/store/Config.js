@@ -1,3 +1,5 @@
+import Vue from "vue";
+
 const state = {
   configs: {
     wait: 30,
@@ -13,6 +15,21 @@ const state = {
   },
 };
 
+const mutations = {
+  SET_CONFIGS(state, payload) {
+    if (payload == null) return;
+
+    let keys = Object.keys(payload);
+    for (let i = 0; i < keys.length; i++) {
+      let key = keys[i];
+      if (payload[key] == null) continue;
+      if (!(key in state)) continue;
+
+      Vue.set(state.configs, key, payload[key]);
+    }
+  },
+};
+
 const getters = {
   configs(state) {
     return state.configs;
@@ -24,5 +41,6 @@ const getters = {
 
 export default {
   state,
+  mutations,
   getters,
 };

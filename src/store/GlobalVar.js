@@ -1,13 +1,7 @@
 import Vue from "vue";
 
 const state = {
-  globalVar: {
-    begin: "2022-03-03 18:30:00",
-    end: "2022-03-03 20:00:00",
-    beginTimestamp: "toTimestamp({begin})",
-    endTimestamp: "toTimestamp({end})",
-    channelId: "319470",
-  },
+  globalVar: {},
 };
 
 const mutations = {
@@ -20,6 +14,20 @@ const mutations = {
     if (value == null) return;
 
     Vue.delete(state.globalVar, value.key);
+  },
+  SET_GLOBALVAR(state, value) {
+    if (value == null) return;
+
+    state.globalVar = {};
+
+    let keys = Object.keys(value);
+    for (let i = 0; i < keys.length; i++) {
+      let key = keys[i];
+      if (value[key] == null) continue;
+      if (!(typeof value[key] == "string")) continue;
+
+      Vue.set(state.globalVar, key, value[key]);
+    }
   },
 };
 
