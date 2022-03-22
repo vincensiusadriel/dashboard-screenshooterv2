@@ -5,6 +5,7 @@ import GlobalVar from "./GlobalVar";
 import Config from "./Config";
 import Links from "./Links";
 import Path from "./Path";
+import Confluence from "./Confluence";
 
 Vue.use(Vuex);
 
@@ -14,5 +15,6 @@ export default new Vuex.Store({
     Config,
     Links,
     Path,
+    Confluence,
   },
 });

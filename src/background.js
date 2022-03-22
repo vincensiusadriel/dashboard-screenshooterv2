@@ -1,8 +1,11 @@
 "use strict";
 
-import { app, protocol, BrowserWindow } from "electron";
+import { app, protocol, BrowserWindow, ipcMain } from "electron";
 import { createProtocol } from "vue-cli-plugin-electron-builder/lib";
 import installExtension, { VUEJS_DEVTOOLS } from "electron-devtools-installer";
+import fs from "fs";
+import FormData from "form-data";
+import axios from "axios";
 const isDevelopment = process.env.NODE_ENV !== "production";
 
 // Scheme must be registered before the app is ready
@@ -80,3 +83,76 @@ if (isDevelopment) {
     });
   }
 }
+
+ipcMain.handle("send-attachments", async (event, arg) => {
+  let listImageRes = arg.listImageResult;
+  let hostname = arg.hostname;
+  let pageId = arg.pageId;
+  let base64 = arg.base64;
+
+  let promises = [];
+  for (let i = 0; i < listImageRes.length; i++) {
+    let arr = listImageRes[i].split("/");
+    let filename = arr[arr.length - 1];
+    let file = fs.readFileSync(listImageRes[i]);
+
+    let body = new FormData();
+    body.append("file", file, {
+      filename: filename,
+    });
+    body.append("minorEdit", "true");
+
+    promises.push(
+      axios.post(
+        `${hostname}/wiki/rest/api/content/${pageId}/child/attachment`,
+        body,
+        {
+          headers: {
+            ...body.getHeaders(),
+            Authorization: `Basic ${base64}`,
+            "X-Atlassian-Token": "nocheck",
+          },
+        }
+      )
+    );
+  }
+
+  await Promise.allSettled(promises).catch((err) => {
+    return err;
+  });
+});
+
+ipcMain.handle("create-content", async (event, arg) => {
+  let id = 0;
+  await axios
+    .post(
+      `${arg.hostname}/wiki/rest/api/content`,
+      JSON.stringify({
+        type: "page",
+        title: arg.confluenceTitle,
+        space: {
+          key: arg.space,
+        },
+        ancestors: arg.ancestors,
+        body: {
+          storage: {
+            value: arg.newBody,
+            representation: "storage",
+          },
+        },
+      }),
+      {
+        headers: {
+          Authorization: `Basic ${arg.base64}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "X-Atlassian-Token": "no-check",
+        },
+      }
+    )
+    .then((response) => {
+      id = response.data.id;
+    });
+
+  return id;
+});

@@ -33,7 +33,7 @@
       <img
         class="mt-4"
         v-if="currentLinkResult != null"
-        :src="currentLinkResult.image + `?rnd=${counter}`"
+        :src="'file://' + currentLinkResult.image + `?rnd=${counter}`"
         style="cursor: pointer"
         @click="isShowImage = true"
       />
@@ -43,7 +43,10 @@
         v-if="currentLinkResult != null"
       >
         <div class="modal-content" style="overflow-y: scroll">
-          <img :src="currentLinkResult.image + `?rnd=${counter}`" alt="" />
+          <img
+            :src="'file://' + currentLinkResult.image + `?rnd=${counter}`"
+            alt=""
+          />
         </div>
         <button
           class="modal-close delete is-large"
@@ -111,7 +114,7 @@ export default {
   },
   computed: {
     highlightJson() {
-      const obj = JSON.parse(this.currentLinkResult.scrapper);
+      const obj = this.currentLinkResult.scrapper;
       const jsonPretty = JSON.stringify(obj, null, 4);
       hljs.registerLanguage("json", json);
       let res = hljs.highlight(jsonPretty, {
@@ -122,12 +125,12 @@ export default {
     stringToValue() {
       if (this.currentLinkResult == null) return {};
 
-      const obj = JSON.parse(this.currentLinkResult.scrapper);
+      const obj = this.currentLinkResult.scrapper;
       return obj;
     },
     filteredScrapper() {
       if (this.currentLinkResult == null) return [];
-      const obj = JSON.parse(this.currentLinkResult.scrapper);
+      const obj = this.currentLinkResult.scrapper;
       return Object.keys(obj).filter((x) =>
         x.toString().toLowerCase().includes(this.search.toLowerCase())
       );

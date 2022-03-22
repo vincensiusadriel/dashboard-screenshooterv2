@@ -10,7 +10,7 @@
         </div>
         <div class="column">
           <button
-            class="button is-primary is-pulled-right"
+            class="button is-primary is-pulled-right mr-2 mb-2"
             @click="showFullModal()"
           >
             Checkout

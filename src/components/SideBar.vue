@@ -5,6 +5,7 @@
       <li><a @click="changeTab('save')">Save Current Configuration</a></li>
       <li><a @click="changeTab('main')">Main Configuration</a></li>
       <li><a @click="changeTab('global')">Global Variable</a></li>
+      <li><a @click="changeTab('confluence')">Confluence Configuration</a></li>
       <li><a @click="changeTab('dashboard')">Dashboards</a></li>
       <li>
         <ul>

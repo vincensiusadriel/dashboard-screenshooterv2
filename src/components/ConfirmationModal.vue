@@ -18,7 +18,13 @@
         <button class="button is-danger" @click="noClick" v-if="noText != ''">
           {{ noText }}
         </button>
-        <button class="button is-success is-pulled-right" @click="yesClick">
+        <button
+          :class="{
+            'button is-success is-pulled-right': true,
+            'is-loading': isLoadingButton,
+          }"
+          @click="yesClick"
+        >
           {{ yesText }}
         </button>
       </footer>
@@ -32,6 +38,10 @@ export default {
     isHideClose: {
       type: Boolean,
       default: false,
+    },
+    closeOnYes: {
+      type: Boolean,
+      default: true,
     },
     value: {
       type: Boolean,
@@ -49,10 +59,15 @@ export default {
       type: String,
       default: "",
     },
+    isLoadingButton: {
+      type: Boolean,
+      default: false,
+    },
   },
   methods: {
     yesClick() {
       this.$emit("onYes");
+      if (!this.closeOnYes) return;
       this.close();
     },
     noClick() {

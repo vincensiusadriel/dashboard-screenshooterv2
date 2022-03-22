@@ -218,16 +218,89 @@
             </div>
             <div class="column">
               <button
-                class="button is-primary is-pulled-right"
+                class="button is-primary is-pulled-right mb-2 mr-2"
                 @click="startPrint(linksSelectedExcludeToBePrinted)"
               >
                 Start Shooting
+              </button>
+              <button
+                class="button is-info is-pulled-right mb-2 mr-2"
+                @click="
+                  isShowConfluenceModal = true;
+                  isDoneGenerateConfluence = false;
+                "
+              >
+                Generate Confluence Report
               </button>
             </div>
           </div>
         </div>
       </footer>
     </div>
+
+    <confirmation-modal
+      v-model="isShowConfluenceModal"
+      :title="'Generate Confluence Report'"
+      :yesText="'Generate'"
+      :noText="'Cancel'"
+      :closeOnYes="false"
+      :isLoadingButton="isLoadingPrintConfluence"
+      @onYes="printConfluence"
+    >
+      <div class="columns">
+        <div class="column">
+          <div class="field is-horizontal">
+            <input
+              id="switchIsCreateCopy"
+              type="checkbox"
+              name="switchIsCreateCopy"
+              class="switch is-rounded"
+              :checked="isCreateCopy ? 'checked' : 'unchecked'"
+              v-model="isCreateCopy"
+            />
+            <label class="is-vcentered pt-0" for="switchIsCreateCopy"
+              >Create a copy</label
+            >
+          </div>
+          <div class="field is-horizontal">
+            <div class="field-label is-normal">
+              <label class="label">Template URL</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <p class="control">
+                  <input class="input" type="text" v-model="templateURL" />
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="field is-horizontal" v-if="isCreateCopy">
+            <div class="field-label is-normal">
+              <label class="label">Title</label>
+            </div>
+            <div class="field-body">
+              <div class="field">
+                <p class="control">
+                  <input class="input" type="text" v-model="confluenceTitle" />
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="notification is-danger"
+            v-for="(item, i) in errorConfluence"
+            :key="i"
+          >
+            {{ item }}
+          </div>
+
+          <div v-if="isDoneGenerateConfluence" class="notification is-success">
+            Successfully Generated
+          </div>
+        </div>
+      </div>
+    </confirmation-modal>
 
     <ConfirmationModal
       v-model="isShowModal"
@@ -268,6 +341,7 @@ import path from "path";
 import fs from "fs";
 import moment from "moment";
 import LinksResult from "./LinksResult.vue";
+import { ipcRenderer } from "electron";
 
 let context;
 let pageMap = {};
@@ -338,6 +412,98 @@ const replaceWithVar = (toReplace, globalVar, withDoubleQuote) => {
   }
 };
 
+const replaceConfluenceAPI = (toReplace, globalVar) => {
+  if (toReplace == null || toReplace == "") return ["", []];
+  if (!(typeof toReplace == "string")) return ["", []];
+  if (globalVar == null) return [toReplace, []];
+
+  let i = 0;
+  let lengthToReplace = toReplace.length;
+  let finishString = "";
+  let variableName = "";
+  let startVar = false;
+  let imageUrls = [];
+  while (i < lengthToReplace) {
+    if (startVar == true && toReplace[i] == "{") {
+      finishString += toReplace[i] + variableName;
+    }
+
+    if (toReplace[i] == "{") {
+      variableName = "";
+      startVar = true;
+    } else if (toReplace[i] == "}" && startVar == true) {
+      let temp = variableName.split(".");
+      if (temp.length != 3 && temp.length != 2) {
+        i++;
+        variableName = "";
+        startVar = false;
+        continue;
+      }
+
+      if (globalVar[temp[0]] == null) {
+        i++;
+        variableName = "";
+        startVar = false;
+        continue;
+      }
+
+      let linkResult = globalVar[temp[0]];
+      if (linkResult[temp[1]] == null) {
+        i++;
+        variableName = "";
+        startVar = false;
+        continue;
+      }
+
+      if (temp[1] == "image") {
+        let pathToImage = linkResult["image"];
+        if (!fs.existsSync(pathToImage)) {
+          i++;
+          variableName = "";
+          startVar = false;
+          continue;
+        }
+
+        imageUrls.push(pathToImage);
+        finishString += `<ac:image ac:align="center" ac:layout="center"><ri:attachment ri:filename="${temp[0]}.png" /></ac:image>`;
+      } else if (temp[1] == "scrapper") {
+        if (temp.length != 3) {
+          i++;
+          variableName = "";
+          startVar = false;
+          continue;
+        }
+        if (linkResult["scrapper"][temp[2]] == null) {
+          i++;
+          variableName = "";
+          startVar = false;
+          continue;
+        }
+
+        let value = linkResult["scrapper"][temp[2]];
+        finishString += value + "";
+      }
+
+      variableName = "";
+      startVar = false;
+    } else {
+      if (startVar == true) {
+        variableName += toReplace[i];
+      } else {
+        finishString += toReplace[i];
+      }
+    }
+    i++;
+  }
+
+  //insurance if no closing bracket found
+  if (startVar) {
+    finishString += `{${variableName}`;
+  }
+
+  return [finishString, imageUrls];
+};
+
 const loadSLA = function (pathUrl, listOrigin) {
   const pathToJson = path.join(pathUrl, "state.json");
   if (!fs.existsSync(pathToJson)) {
@@ -386,8 +552,10 @@ export default {
   },
   data() {
     return {
+      isDoneGenerateConfluence: false,
       browser: null,
       isShowModal: false,
+      isShowConfluenceModal: false,
       listOrigin: {},
       listError: [],
       listToBePrinted: [],
@@ -396,12 +564,17 @@ export default {
       timerInterval: null,
       isHold: false,
       isLoading: false,
+      isLoadingPrintConfluence: false,
       isPrinting: false,
       isBackground: true,
+      isCreateCopy: true,
       isShowImage: false,
       currentLinkResult: null,
       counter: 0,
       currentShow: "image",
+      templateURL: "",
+      errorConfluence: [],
+      confluenceTitle: "",
     };
   },
   mounted() {
@@ -412,6 +585,151 @@ export default {
     loadSLA(this.Path, this.listOrigin);
   },
   methods: {
+    async printConfluence() {
+      this.isLoadingPrintConfluence = true;
+      this.isDoneGenerateConfluence = false;
+      this.errorConfluence = [];
+      let username = this.$store.getters.email;
+      let token = this.$store.getters.apiKey;
+
+      let base64 = Buffer.from(`${username}:${token}`).toString("base64");
+
+      let versionNumber;
+      let bodyValue;
+      let pageTitle;
+      if (this.isCreateCopy && this.confluenceTitle == "") {
+        this.isLoadingPrintConfluence = false;
+        return;
+      }
+      let ancestors;
+
+      let linkURL = this.templateURL;
+      let url = null;
+      try {
+        url = new URL(linkURL);
+      } catch (error) {
+        this.errorConfluence.push(error);
+        this.isLoadingPrintConfluence = false;
+        return;
+      }
+
+      if (url == null) {
+        this.isLoadingPrintConfluence = false;
+        return;
+      }
+
+      let arr = url.pathname.split("/");
+      if (arr.length < 6) {
+        this.isLoadingPrintConfluence = false;
+        return;
+      }
+      let pageId = arr[5];
+      let space = arr[3];
+      let hostname = url.origin;
+
+      try {
+        await fetch(
+          `${hostname}/wiki/rest/api/content/${pageId}?expand=body.storage,version,ancestors`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Basic ${base64}`,
+              Accept: "application/json",
+            },
+          }
+        )
+          .then((response) => {
+            return response.text();
+          })
+          .then((text) => {
+            let obj = JSON.parse(text);
+            versionNumber = obj.version.number;
+            bodyValue = obj.body.storage.value;
+            pageTitle = obj.title;
+            ancestors = obj.ancestors;
+          });
+      } catch (error) {
+        this.errorConfluence.push(error);
+        this.isLoadingPrintConfluence = false;
+        return;
+      }
+
+      let [newBody, listImageRes] = replaceConfluenceAPI(
+        bodyValue,
+        this.linksResult
+      );
+
+      if (this.isCreateCopy) {
+        try {
+          await ipcRenderer
+            .invoke("create-content", {
+              hostname: hostname,
+              base64: base64,
+              confluenceTitle: this.confluenceTitle,
+              space: space,
+              ancestors: ancestors,
+              newBody: newBody,
+            })
+            .then((id) => {
+              pageId = id;
+            });
+        } catch (error) {
+          this.errorConfluence.push(error);
+          this.isLoadingPrintConfluence = false;
+
+          return;
+        }
+      } else {
+        try {
+          await fetch(`${hostname}/wiki/rest/api/content/${pageId}`, {
+            method: "PUT",
+            headers: {
+              Authorization: `Basic ${base64}`,
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              id: pageId,
+              type: "page",
+              title: pageTitle,
+              space: {
+                key: space,
+              },
+              body: {
+                storage: {
+                  value: newBody,
+                  representation: "storage",
+                },
+              },
+              version: {
+                number: ++versionNumber,
+              },
+            }),
+          }).then((response) => {
+            return response.text();
+          });
+        } catch (error) {
+          this.errorConfluence.push(error);
+          this.isLoadingPrintConfluence = false;
+
+          return;
+        }
+      }
+
+      await ipcRenderer
+        .invoke("send-attachments", {
+          listImageResult: listImageRes,
+          hostname: hostname,
+          pageId: pageId,
+          base64: base64,
+        })
+        .then((result) => {
+          if (result == null) return;
+          this.errorConfluence.push(result);
+        });
+      this.isLoadingPrintConfluence = false;
+      this.isDoneGenerateConfluence = true;
+    },
     setCurrentLinkResult(val) {
       this.counter++;
       this.currentLinkResult = val;
@@ -498,9 +816,10 @@ export default {
         }
 
         if (Object.values(result).length > 0) {
-          scrapperResult = JSON.stringify(result);
+          scrapperResult = result;
+          let scrapperResultString = JSON.stringify(result, null, 4);
           pathScrapper = path.join(this.Path, "result", key + ".json");
-          fs.writeFileSync(pathScrapper, scrapperResult);
+          fs.writeFileSync(pathScrapper, scrapperResultString);
         }
       }
 
@@ -522,7 +841,7 @@ export default {
       if (imageResult != null || scrapperResult != null) {
         let payload = {
           // image: "data:image/jpeg;base64," + imageResult.toString("base64"),
-          image: "file://" + pathImage,
+          image: pathImage,
           scrapper: scrapperResult,
         };
 
@@ -561,7 +880,6 @@ export default {
           }
         } catch (error) {
           this.isLoading = false;
-          console.log(error);
           return;
         }
         this.isLoading = false;

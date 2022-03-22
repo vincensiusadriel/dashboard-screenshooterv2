@@ -129,7 +129,7 @@ export default {
       return this.$store.getters.globalVar;
     },
     isDuplicate() {
-      return this.varKey in this.$store.getters.globalVar;
+      return this.$store.getters.globalVar[this.varKey] != null;
     },
   },
   methods: {

@@ -30,10 +30,18 @@
             <div class="tile is-ancestor has-text-centered">
               <div class="tile is-parent" ref="save">
                 <article class="tile is-child box">
-                  <button @click="saveConfiguration" class="button is-primary">
+                  <button
+                    @click="saveConfiguration"
+                    :class="{
+                      'button is-primary': true,
+                      'is-loading': isLoading,
+                    }"
+                  >
                     Save Current Configuration
                   </button>
-                  <p class="subtitle mt-2" v-if="isSaved">Successfully saved</p>
+                  <p class="subtitle mt-2" v-if="isSaved && !isLoading">
+                    Successfully saved
+                  </p>
                 </article>
               </div>
               <!-- <div class="tile is-parent">
@@ -63,6 +71,9 @@
             </div>
             <div class="column is-full">
               <GlobalVariable ref="global"></GlobalVariable>
+            </div>
+            <div class="column is-full">
+              <confluence-config ref="confluence"></confluence-config>
             </div>
             <div class="column is-full">
               <LinksConfig ref="dashboard" :forwarder="forwarder"></LinksConfig>
@@ -153,6 +164,7 @@ import NavigationBar from "./components/NavigationBar.vue";
 import { chromium } from "playwright";
 import fs from "fs";
 import path from "path";
+import ConfluenceConfig from "./components/ConfluenceConfig.vue";
 
 export default {
   name: "App",
@@ -160,6 +172,7 @@ export default {
     return {
       forwarder: "",
       isSaved: false,
+      isLoading: false,
     };
   },
   components: {
@@ -168,6 +181,7 @@ export default {
     ConfigsVariable,
     LinksConfig,
     NavigationBar,
+    ConfluenceConfig,
   },
   methods: {
     async someTest() {
@@ -182,8 +196,11 @@ export default {
       fs.writeFileSync(configsPath, buffer);
     },
     saveConfiguration() {
+      this.isLoading = true;
       let pathToConfig = path.join(this.Path, "config.json");
       let data = {
+        email: this.$store.getters.email,
+        apiKey: this.$store.getters.apiKey,
         configs: this.$store.getters.configs,
         globalVar: this.$store.getters.globalVar,
         links: this.$store.getters.links,
@@ -192,6 +209,7 @@ export default {
       fs.writeFileSync(pathToConfig, JSON.stringify(data, null, 4));
 
       this.isSaved = true;
+      this.isLoading = false;
     },
     navigate(key) {
       const el = this.$refs[key]?.$el || this.$refs[key];
@@ -209,6 +227,8 @@ export default {
     this.$store.commit("SET_CONFIGS", data.configs);
     this.$store.commit("SET_GLOBALVAR", data.globalVar);
     this.$store.commit("SET_LINKS", data.links);
+    this.$store.commit("SET_EMAIL", data.email);
+    this.$store.commit("SET_API_KEY", data.apiKey);
   },
   computed: {
     Path() {
