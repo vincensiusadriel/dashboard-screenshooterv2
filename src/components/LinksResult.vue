@@ -137,6 +137,11 @@ export default {
     },
   },
   methods: {},
+  watch: {
+    currentLinkResult() {
+      this.currentShow = "image";
+    },
+  },
 };
 </script>
 

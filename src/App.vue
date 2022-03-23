@@ -223,6 +223,7 @@ export default {
   },
   mounted() {
     let pathToConfig = path.join(this.Path, "config.json");
+    if (!fs.existsSync(pathToConfig)) return;
     let data = JSON.parse(fs.readFileSync(pathToConfig));
     this.$store.commit("SET_CONFIGS", data.configs);
     this.$store.commit("SET_GLOBALVAR", data.globalVar);

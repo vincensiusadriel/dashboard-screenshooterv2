@@ -168,6 +168,12 @@
                     </span>
                     {{ item }}
                   </div>
+                  <div
+                    class="column is-full is-size-7"
+                    v-if="linksResult[item] != null"
+                  >
+                    Captured at: {{ linksResult[item].timestamp }}
+                  </div>
                   <div class="column is-full">
                     <div class="is-flex is-flex-wrap-wrap">
                       <button
@@ -580,11 +586,41 @@ export default {
   mounted() {
     //test function
     toTimestamp("");
+    this.loadResult();
     //end test
 
     loadSLA(this.Path, this.listOrigin);
   },
   methods: {
+    loadResult() {
+      const dir = path.join(this.Path, "result");
+
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir);
+      }
+
+      let len = this.linksArr.length;
+      for (let i = 0; i < len; i++) {
+        let key = this.linksArr[i];
+        let imagePath = path.join(dir, `${key}.png`);
+        let scrapperPath = path.join(dir, `${key}.json`);
+        let payload = { timestamp: "Preload" };
+        if (fs.existsSync(imagePath)) {
+          payload.image = imagePath;
+        }
+
+        if (fs.existsSync(scrapperPath)) {
+          payload.scrapper = JSON.parse(fs.readFileSync(scrapperPath));
+        }
+
+        if (payload.image != null || payload.scrapper != null) {
+          this.$store.commit("ADD_LINK_RESULT", {
+            key: key,
+            value: payload,
+          });
+        }
+      }
+    },
     async printConfluence() {
       this.isLoadingPrintConfluence = true;
       this.isDoneGenerateConfluence = false;
@@ -741,6 +777,7 @@ export default {
       let imageResult = null;
       let page = pageMap[key];
       this.isPrinting = true;
+      const dir = path.join(this.Path, "result");
 
       if (page == null) {
         this.isPrinting = false;
@@ -818,13 +855,13 @@ export default {
         if (Object.values(result).length > 0) {
           scrapperResult = result;
           let scrapperResultString = JSON.stringify(result, null, 4);
-          pathScrapper = path.join(this.Path, "result", key + ".json");
+          pathScrapper = path.join(dir, key + ".json");
           fs.writeFileSync(pathScrapper, scrapperResultString);
         }
       }
 
       if (clip != null) {
-        pathImage = path.join(this.Path, "result", key + ".png");
+        pathImage = path.join(dir, key + ".png");
         imageResult = await page.screenshot({
           type: "png",
           path: pathImage,
@@ -843,6 +880,7 @@ export default {
           // image: "data:image/jpeg;base64," + imageResult.toString("base64"),
           image: pathImage,
           scrapper: scrapperResult,
+          timestamp: moment().format("MMMM Do YYYY, h:mm:ss a"),
         };
 
         this.$store.commit("ADD_LINK_RESULT", {
