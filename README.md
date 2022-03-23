@@ -1,11 +1,16 @@
-# test-app
+# dashboard-screenshooterv2
 
 ## Project setup
+1. First you must have node.js installed
+
+2. Then Run
 ```
-npm install
+npm start
 ```
 
-### Compiles and hot-reloads for development
+3. after this go to dist_electron/mac folder you should find the .app 
+
+<!-- ### Compiles and hot-reloads for development
 ```
 npm run serve
 ```
@@ -18,7 +23,7 @@ npm run build
 ### Lints and fixes files
 ```
 npm run lint
-```
+``` -->
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
