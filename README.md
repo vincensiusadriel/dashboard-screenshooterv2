@@ -68,12 +68,18 @@ npm run lint
   
 6. If the login session is done, you can start shooting or select specific dashboard, the process will start and you can preview the results
   
-7. (Optional) if you want to generate a Confluence report, you can click Generate Confluence Report button and input the page template link. the value format in the report would be : 
+7. (Optional) if you want to generate a Confluence report, you can click Generate Confluence Report button and input the page template link. the value format in the Confluence document template should have : 
 
    | Format        | Description           |
    | ------------- |:-------------:| 
    | ```{<dashboard name>.scrapper.<scrapper title>}``` | this is to print scrapper value | 
    | ```{<dashboard name>.image}``` | this is to upload dashboard image |
+
+   Here is some example
+   
+   <img width="808" alt="image" src="https://user-images.githubusercontent.com/43723280/159702773-0ecddce0-c557-46b4-b918-0f0223f278b2.png">
+
+   After that you can choose either to create a copy (it requires a page title and it must not be duplicate) or update the current template (all placeholder will be replaced with value either its empty or not)
 
 
 
