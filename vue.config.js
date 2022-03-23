@@ -4,6 +4,7 @@ module.exports = defineConfig({
   pluginOptions: {
     electronBuilder: {
       nodeIntegration: true,
+        outputDir: 'bin'
     },
   },
 });

@@ -8,7 +8,9 @@
 npm start
 ```
 
-3. after this go to dist_electron/mac folder you should find the .app 
+3. after this go to /bin/mac folder you should find the .app 
+
+4. Now you could move and run your app anywhere
 
 <!-- ### Compiles and hot-reloads for development
 ```
