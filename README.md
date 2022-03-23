@@ -37,7 +37,7 @@ npm run lint
    | Window Width (pixel) | bounding window size (width)|   
    | Window Height (pixel) | bounding window size (height)|
 
-2. Next filled in the global variables required to be dynamically replaced in the dashboard url, these value can correlate to one another in curly braces format (ex : {<other listed global variable>} and use toTimestamp function (for date format only)
+2. Next filled in the global variables required to be dynamically replaced in the dashboard url, these value can correlate to one another in curly braces format (ex : {```<other listed global variabl>```} and use toTimestamp function (for date format only)
   
 3. (Optional) Fill the confluence credentials, this is used to generate confluence document in later mentioned steps
   
@@ -72,8 +72,8 @@ npm run lint
 
    | Format        | Description           |
    | ------------- |:-------------:| 
-   | {<dashboard name>.scrapper.<scrapper title>} | this is to print scrapper value | 
-   | {<dashboard name>.image} | this is to upload dashboard image |
+   | ```{<dashboard name>.scrapper.<scrapper title>}``` | this is to print scrapper value | 
+   | ```{<dashboard name>.image}``` | this is to upload dashboard image |
 
 
 
