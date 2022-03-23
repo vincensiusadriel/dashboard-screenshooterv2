@@ -66,7 +66,7 @@ npm run lint
   
 5. (Optional) Next step is to check for stored session for selected dashboard, if there is no or expired session, you must click the url to the page or press Login All Session, it will open a browser and once you login to all the pages, you can go back to the app and click confirm
   
-6. If the login session is done, you can start shooting or select specific dashboard, the process will start and you can preview the results
+6. If the login session is done, you can start shooting or select specific dashboard, the process will start and you can preview the results. the file results will be stored in your local directory at /result (relative to the app folder)
   
 7. (Optional) if you want to generate a Confluence report, you can click Generate Confluence Report button and input the page template link. the value format in the Confluence document template should have : 
 
