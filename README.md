@@ -1,4 +1,4 @@
-# dashboard-screenshooterv2
+<img width="986" alt="image" src="https://user-images.githubusercontent.com/43723280/159681858-6baddc1b-b9a0-48ec-b642-0cb85c9df84c.png">
 
 ## Project setup
 1. First you must have node.js installed
