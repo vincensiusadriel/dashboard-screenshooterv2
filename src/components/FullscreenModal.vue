@@ -185,7 +185,7 @@
                       <button
                         v-if="linksResult[item] != null"
                         class="button is-info mr-2 mb-2"
-                        @click="setCurrentLinkResult(linksResult[item])"
+                        @click="setCurrentLinkResult(linksResult[item], item)"
                       >
                         Show Result
                       </button>
@@ -310,7 +310,7 @@
 
     <ConfirmationModal
       v-model="isShowModal"
-      :title="'Close Browser'"
+      :title="'Save Session'"
       :isHideClose="true"
       :yesText="'Confirm'"
       :noText="'Cancel'"
@@ -766,9 +766,9 @@ export default {
       this.isLoadingPrintConfluence = false;
       this.isDoneGenerateConfluence = true;
     },
-    setCurrentLinkResult(val) {
+    setCurrentLinkResult(val, key) {
       this.counter++;
-      this.currentLinkResult = val;
+      this.currentLinkResult = {...val, key};
     },
     async takePrint(key) {
       let pathScrapper = null;
@@ -888,7 +888,7 @@ export default {
           value: payload,
         });
 
-        this.setCurrentLinkResult(payload);
+        this.setCurrentLinkResult(payload, key);
       }
 
       this.isPrinting = false;
@@ -963,15 +963,17 @@ export default {
       }
     },
     async openChromium(links) {
+
       if (links == null) return;
       if (links.length <= 0) return;
+
+      this.isShowModal = true;
 
       this.listError = [];
 
       const pathToJson = path.join(this.Path, "state.json");
 
       this.browser = await chromium.launch({ headless: false });
-      this.isShowModal = true;
 
       if (fs.existsSync(pathToJson)) {
         context = await this.browser.newContext({

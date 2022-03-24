@@ -1,5 +1,12 @@
 <template>
   <div class="" v-if="currentLinkResult != null">
+    <section class="hero is-info welcome is-small">
+            <div class="hero-body">
+              <div class="container">
+                <h5 >{{ currentLinkResult.key }}</h5>
+              </div>
+            </div>
+          </section>
     <div class="tabs">
       <ul>
         <li
