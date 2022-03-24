@@ -10,7 +10,7 @@
 npm start
 ```
 
-4. after this go to /bin/mac folder you should find the .app 
+4. after this go to /dashboard-screenshooterv2/bin/mac folder you should find the .app 
 
 5. Now you could move and run your app anywhere
 
