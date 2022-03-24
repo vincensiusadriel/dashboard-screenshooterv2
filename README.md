@@ -3,14 +3,16 @@
 ## Project setup
 1. First you must have node.js installed
 
-2. Then Run
+2. Clone this repository, and cd to dashboard-screenshooterv2
+
+3. Then Run
 ```
 npm start
 ```
 
-3. after this go to /bin/mac folder you should find the .app 
+4. after this go to /bin/mac folder you should find the .app 
 
-4. Now you could move and run your app anywhere
+5. Now you could move and run your app anywhere
 
 <!-- ### Compiles and hot-reloads for development
 ```
