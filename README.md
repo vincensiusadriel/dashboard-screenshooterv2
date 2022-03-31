@@ -1,9 +1,9 @@
 <img width="986" alt="image" src="https://user-images.githubusercontent.com/43723280/159681858-6baddc1b-b9a0-48ec-b642-0cb85c9df84c.png">
 
 ## Project setup
-1. First you must have node.js installed
+1. First you must have [node.js](https://nodejs.org/en/) and [Google Chrome](https://www.google.com/chrome/?brand=FHFK&gclid=Cj0KCQjw_4-SBhCgARIsAAlegrWKE99g2f0LBn-yFQ8nKX5GUw5MJukcD5YClLOV5lFBtXIyaZUeNk0aAjPkEALw_wcB&gclsrc=aw.ds) installed
 
-2. Clone this repository, and cd to dashboard-screenshooterv2
+2. Then clone this repository, and cd to dashboard-screenshooterv2
 
 3. Then Run
 ```
