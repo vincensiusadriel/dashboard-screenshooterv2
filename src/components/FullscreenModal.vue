@@ -51,10 +51,7 @@
                       <div
                         class="icon is-size-7 has-text-success has-tooltip-right cursor-default"
                         data-tooltip="Authenticated"
-                        v-if="
-                          listOriginCommputed[item] ||
-                          listOriginCommputed[getHostName(item)]
-                        "
+                        v-if="listOriginCommputed[getHostName(item)]"
                       >
                         <i class="fa fa-circle" aria-hidden="true"></i>
                       </div>
@@ -313,9 +310,7 @@
       :title="'Save Session'"
       :isHideClose="true"
       :yesText="'Confirm'"
-      :noText="'Cancel'"
       @onYes="closeAndSaveChromium()"
-      @onNo="closeChromium()"
     >
       Please press confirm to close and save browser session, or cancel to close
       the browser
@@ -510,22 +505,25 @@ const replaceConfluenceAPI = (toReplace, globalVar) => {
   return [finishString, imageUrls];
 };
 
-const loadSLA = function (pathUrl, listOrigin) {
+const loadSLA = function (pathUrl, listOrigin, getHostName) {
+  listOrigin = {};
   const pathToJson = path.join(pathUrl, "state.json");
   if (!fs.existsSync(pathToJson)) {
-    return;
+    return listOrigin;
   }
   let json = JSON.parse(fs.readFileSync(pathToJson));
-  if (json == null) return;
-  if (json.origins == null) return;
-  if (json.origins.length <= 0) return;
-  if (json.cookies == null) return;
-  if (json.cookies.length <= 0) return;
+  if (json == null) return listOrigin;
+  if (json.origins == null) return listOrigin;
+  if (json.origins.length <= 0) return listOrigin;
+  if (json.cookies == null) return listOrigin;
+  if (json.cookies.length <= 0) return listOrigin;
 
   for (let i = 0; i < json.origins.length; i++) {
     if (json.origins[i].origin == null) continue;
 
-    listOrigin[json.origins[i].origin] = true;
+    console.log("origin ", getHostName(json.origins[i].origin));
+
+    listOrigin[getHostName(json.origins[i].origin)] = true;
   }
 
   let timeStampInMs =
@@ -539,11 +537,15 @@ const loadSLA = function (pathUrl, listOrigin) {
   for (let i = 0; i < json.cookies.length; i++) {
     if (json.cookies[i].domain == null) continue;
     if (json.cookies[i].expires == null) continue;
-    if (new Date(json.cookies[i].expires * 1000) < new Date(timeStampInMs))
+    if (new Date(json.cookies[i].expires * 1000) < new Date(timeStampInMs)) {
+      listOrigin[json.cookies[i].domain] = false;
       continue;
-
+    }
+    console.log("domain ", json.cookies[i].domain);
     listOrigin[json.cookies[i].domain] = true;
   }
+
+  return listOrigin;
 };
 export default {
   components: {
@@ -589,7 +591,7 @@ export default {
     this.loadResult();
     //end test
 
-    loadSLA(this.Path, this.listOrigin);
+    this.listOrigin = loadSLA(this.Path, this.listOrigin, this.getHostName);
   },
   methods: {
     loadResult() {
@@ -768,7 +770,7 @@ export default {
     },
     setCurrentLinkResult(val, key) {
       this.counter++;
-      this.currentLinkResult = {...val, key};
+      this.currentLinkResult = { ...val, key };
     },
     async takePrint(key) {
       let pathScrapper = null;
@@ -895,27 +897,18 @@ export default {
     },
     async startPrint(list) {
       await wait(100);
-      if (this.browser == null) {
+      if (context == null) {
         this.isLoading = true;
-        const pathToJson = path.join(this.Path, "state.json");
-        let noSession = false;
-        if (!fs.existsSync(pathToJson)) {
-          if (confirm("No session is stored are you sure ?")) {
-            noSession = true;
-          } else {
+        const persistentDataDir = path.join(this.Path, "profile");
+        if (!fs.existsSync(persistentDataDir)) {
+          if (!confirm("No session is stored are you sure ?")) {
             return;
           }
         }
         try {
-          this.browser = await chromium.launch({ headless: this.isBackground });
-
-          if (noSession) {
-            context = await this.browser.newContext();
-          } else {
-            context = await this.browser.newContext({
-              storageState: pathToJson,
-            });
-          }
+          context = await chromium.launchPersistentContext(persistentDataDir, {
+            headless: this.isBackground,
+          });
         } catch (error) {
           this.isLoading = false;
           return;
@@ -963,7 +956,6 @@ export default {
       }
     },
     async openChromium(links) {
-
       if (links == null) return;
       if (links.length <= 0) return;
 
@@ -971,17 +963,11 @@ export default {
 
       this.listError = [];
 
-      const pathToJson = path.join(this.Path, "state.json");
+      const persistentDataDir = path.join(this.Path, "profile");
+      context = await chromium.launchPersistentContext(persistentDataDir, {
+        headless: false,
+      });
 
-      this.browser = await chromium.launch({ headless: false });
-
-      if (fs.existsSync(pathToJson)) {
-        context = await this.browser.newContext({
-          storageState: pathToJson,
-        });
-      } else {
-        context = await this.browser.newContext();
-      }
       for (let i = 0; i < links.length; i++) {
         let page = await context.newPage();
         await page.goto(links[i]).catch(async (err) => {
@@ -993,15 +979,15 @@ export default {
     async closeAndSaveChromium() {
       const pathToJson = path.join(this.Path, "state.json");
       await context.storageState({ path: pathToJson });
-      await this.browser.close();
-      this.browser = null;
+      await context.close();
+      context = null;
       this.listOrigin = {};
-      loadSLA(this.Path, this.listOrigin);
+      this.listOrigin = loadSLA(this.Path, this.listOrigin, this.getHostName);
       this.isShowModal = false;
     },
     async closeChromium() {
-      await this.browser.close();
-      this.browser = null;
+      await context.close();
+      context = null;
       this.isShowModal = false;
     },
     close() {
@@ -1077,11 +1063,11 @@ export default {
   },
   watch: {
     async currentPrinted(oldVal) {
-      if (this.browser == null) return;
+      if (context == null) return;
 
       if (oldVal == null) {
-        await this.browser.close();
-        this.browser = null;
+        await context.close();
+        context = null;
         return;
       }
 
