@@ -51,10 +51,7 @@
                       <div
                         class="icon is-size-7 has-text-success has-tooltip-right cursor-default"
                         data-tooltip="Authenticated"
-                        v-if="
-                          listOriginCommputed[item] ||
-                          listOriginCommputed[getHostName(item)]
-                        "
+                        v-if="listOriginCommputed[getHostName(item)]"
                       >
                         <i class="fa fa-circle" aria-hidden="true"></i>
                       </div>
@@ -510,22 +507,22 @@ const replaceConfluenceAPI = (toReplace, globalVar) => {
   return [finishString, imageUrls];
 };
 
-const loadSLA = function (pathUrl, listOrigin) {
+const loadSLA = function (pathUrl, listOrigin, getHostName) {
   const pathToJson = path.join(pathUrl, "state.json");
   if (!fs.existsSync(pathToJson)) {
-    return;
+    return listOrigin;
   }
   let json = JSON.parse(fs.readFileSync(pathToJson));
-  if (json == null) return;
-  if (json.origins == null) return;
-  if (json.origins.length <= 0) return;
-  if (json.cookies == null) return;
-  if (json.cookies.length <= 0) return;
+  if (json == null) return listOrigin;
+  if (json.origins == null) return listOrigin;
+  if (json.origins.length <= 0) return listOrigin;
+  if (json.cookies == null) return listOrigin;
+  if (json.cookies.length <= 0) return listOrigin;
 
   for (let i = 0; i < json.origins.length; i++) {
     if (json.origins[i].origin == null) continue;
 
-    listOrigin[json.origins[i].origin] = true;
+    listOrigin[getHostName(json.origins[i].origin)] = true;
   }
 
   let timeStampInMs =
@@ -539,11 +536,15 @@ const loadSLA = function (pathUrl, listOrigin) {
   for (let i = 0; i < json.cookies.length; i++) {
     if (json.cookies[i].domain == null) continue;
     if (json.cookies[i].expires == null) continue;
-    if (new Date(json.cookies[i].expires * 1000) < new Date(timeStampInMs))
+    if (new Date(json.cookies[i].expires * 1000) < new Date(timeStampInMs)) {
+      listOrigin[json.cookies[i].domain] = false;
       continue;
+    }
 
     listOrigin[json.cookies[i].domain] = true;
   }
+
+  return listOrigin;
 };
 export default {
   components: {
@@ -589,7 +590,7 @@ export default {
     this.loadResult();
     //end test
 
-    loadSLA(this.Path, this.listOrigin);
+    this.listOrigin = loadSLA(this.Path, this.listOrigin, this.getHostName);
   },
   methods: {
     loadResult() {
@@ -768,7 +769,7 @@ export default {
     },
     setCurrentLinkResult(val, key) {
       this.counter++;
-      this.currentLinkResult = {...val, key};
+      this.currentLinkResult = { ...val, key };
     },
     async takePrint(key) {
       let pathScrapper = null;
@@ -963,7 +964,6 @@ export default {
       }
     },
     async openChromium(links) {
-
       if (links == null) return;
       if (links.length <= 0) return;
 
@@ -996,7 +996,7 @@ export default {
       await this.browser.close();
       this.browser = null;
       this.listOrigin = {};
-      loadSLA(this.Path, this.listOrigin);
+      this.listOrigin = loadSLA(this.Path, this.listOrigin, this.getHostName);
       this.isShowModal = false;
     },
     async closeChromium() {
